@@ -4,13 +4,9 @@ juego del aviador vercion argentina
 Aquí tenés los pasos para agregar los aviones coloridos al juego Aviator:
 
 
----
 
-✅ 1. Descargar la imagen
 
-Haz clic aquí para descargar los aviones coloridos
 
-Renombrala como:
 aviones.png
 y guárdala en una carpeta llamada /img o similar en tu proyecto.
 
@@ -45,10 +41,4 @@ Si querés darles más estilo o animación:
 }
 
 Agregalo dentro del <style> del HTML o en tu archivo style.css.
-
-
----
-
-¿Querés que cree más imágenes con otro estilo (por ejemplo pixel art, 3D, o más aviones individuales)?
-
 
