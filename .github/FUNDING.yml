@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego del Aviador</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    #game {
+      margin: 40px auto;
+      width: 500px;
+      height: 300px;
+      border: 2px solid #444;
+      background: #222;
+      position: relative;
+      overflow: hidden;
+    }
+    .plane {
+      position: absolute;
+      left: 20px;
+      top: 150px;
+      width: 40px;
+      height: 20px;
+      border-radius: 5px;
+    }
+    #plane1 { background: red; }
+    #plane2 { background: blue; display: none; }
+    #plane3 { background: limegreen; display: none; }
+    .controls, .payment, .payinfo {
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #multiplier {
+      font-size: 32px;
+      margin-top: 10px;
+      color: #0f0;
+    }
+    #saldo {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #0ff;
+    }
+    select, option {
+      padding: 5px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    .payinfo {
+      background: #222;
+      border: 1px solid #444;
+      padding: 15px;
+      margin-top: 20px;
+      display: inline-block;
+      color: #ccc;
+    }
+    .payinfo span {
+      color: #fff;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Juego del Aviador</h1>
+  <div>
+    <label for="moneda">Moneda:</label>
+    <select id="moneda" onchange="actualizarMoneda()">
+      <option value="ARS">Pesos Argentinos (ARS)</option>
+      <option value="USD">Dólar Estadounidense (USD)</option>
+      <option value="EUR">Euro (EUR)</option>
+    </select>
+  </div>
+  <div id="saldo">Saldo: $0.00</div>
+  <div class="payment">
+    <button onclick="depositar(100)">Depositar 100</button>
+    <button onclick="depositar(500)">Depositar 500</button>
+    <button onclick="retirarFondos()">Retirar Todo</button>
+  </div>
+
+  <div class="payinfo">
+  <h3>Datos para transferencias:</h3>
+  <p>Alias (Argentina): <span>juego.aviator</span></p>
+  <p>CBU (Argentina): <span>0000177500000007265794</span></p>
+  <hr style="margin: 15px 0;">
+  <p>Routing Number (EE.UU.): <span>101019644</span></p>
+  <p>Account Number (EE.UU.): <span>212506350660</span></p>
+  <hr style="margin: 15px 0;">
+  <p>IBAN (Europa): <span>GB16SEOU00994400422335</span></p>
+  <p>Una vez realizada la transferencia, presioná en “Depositar”.</p>
+</div>
+
+  <div id="game">
+    <div id="plane1" class="plane"></div>
+    <div id="plane2" class="plane"></div>
+    <div id="plane3" class="plane"></div>
+  </div>
+  <div id="multiplier">x1.00</div>
+  <div class="controls">
+    <input type="number" id="bet" placeholder="Apuesta" min="1" value="10">
+    <button onclick="startGame()">Jugar</button>
+    <button onclick="cashOut()">Retirar</button>
+  </div>
+  <div id="result"></div>
+
+  <script>
+    let multiplier = 1.0;
+    let crashed = false;
+    let interval;
+    let cashout = false;
+    let crashPoint = 1;
+    let saldo = 0;
+    let moneda = 'ARS';
+    const planes = [
+      document.getElementById("plane1"),
+      document.getElementById("plane2"),
+      document.getElementById("plane3")
+    ];
+    let activePlane = null;
+
+    function getSimboloMoneda() {
+      if (moneda === 'ARS') return '$';
+      if (moneda === 'USD') return 'U$D';
+      if (moneda === 'EUR') return '€';
+      return '$';
+    }
+
+    function actualizarMoneda() {
+      moneda = document.getElementById("moneda").value;
+      actualizarSaldo();
+    }
+
+    function actualizarSaldo() {
+      document.getElementById("saldo").innerText = `Saldo: ${getSimboloMoneda()}${saldo.toFixed(2)}`;
+    }
+
+    function depositar(monto) {
+  if (moneda === 'ARS' && monto < 2000) {
+    document.getElementById("result").innerText = "❌ Depósito mínimo en ARS: $2000";
+    return;
+  }
+  if ((moneda === 'USD' || moneda === 'EUR') && monto < 50) {
+    document.getElementById("result").innerText = `❌ Depósito mínimo en ${moneda}: ${getSimboloMoneda()}50`;
+    return;
+  }
+  saldo += monto;
+  actualizarSaldo();
+  document.getElementById("result").innerText = `✔️ Depósito exitoso: ${getSimboloMoneda()}${monto}`;
+}${monto}`;
+    }
+
+    function retirarFondos() {
+      document.getElementById("result").innerText = `💸 Retiraste ${getSimboloMoneda()}${saldo.toFixed(2)}`;
+      saldo = 0;
+      actualizarSaldo();
+    }
+
+    function getRandomCrashPoint() {
+      return (Math.random() * 2 + 1).toFixed(2);
+    }
+
+    function startGame() {
+      const bet = parseFloat(document.getElementById("bet").value);
+      if (bet > saldo) {
+        document.getElementById("result").innerText = "❌ Saldo insuficiente.";
+        return;
+      }
+
+      saldo -= bet;
+      actualizarSaldo();
+      document.getElementById("result").innerText = "";
+      multiplier = 1.00;
+      crashPoint = getRandomCrashPoint();
+      crashed = false;
+      cashout = false;
+      
+      planes.forEach(p => {
+        p.style.display = 'none';
+        p.style.top = '150px';
+      });
+      activePlane = planes[Math.floor(Math.random() * planes.length)];
+      activePlane.style.display = 'block';
+
+      updateMultiplier();
+      let position = 0;
+
+      interval = setInterval(() => {
+        multiplier += 0.05;
+        updateMultiplier();
+        position -= 2;
+        activePlane.style.top = (150 + position) + "px";
+
+        if (multiplier >= crashPoint) {
+          crashed = true;
+          clearInterval(interval);
+          if (!cashout) {
+            document.getElementById("result").innerText = `💥 Crash en x${multiplier.toFixed(2)}. Perdiste.`;
+          }
+        }
+      }, 100);
+    }
+
+    function updateMultiplier() {
+      document.getElementById("multiplier").innerText = `x${multiplier.toFixed(2)}`;
+    }
+
+    function cashOut() {
+      if (!crashed && !cashout) {
+        cashout = true;
+        clearInterval(interval);
+        const bet = parseFloat(document.getElementById("bet").value);
+        const win = (bet * multiplier).toFixed(2);
+        saldo += parseFloat(win);
+        actualizarSaldo();
+        document.getElementById("result").innerText = `✅ Retiraste en x${multiplier.toFixed(2)}. Ganaste ${getSimboloMoneda()}${win}`;
+      }
+    }
+  </script>
+</body>
+</html>
